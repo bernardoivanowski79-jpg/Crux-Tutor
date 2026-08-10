@@ -1,0 +1,1 @@
+sed -i 's/import androidx.compose.material.icons.filled.Email/import androidx.compose.material.icons.filled.Email\nimport androidx.compose.material.icons.filled.Language/g' app/src/main/java/com/example/ui/components/GoogleLoginDialog.kt

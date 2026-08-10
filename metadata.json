@@ -1,0 +1,6 @@
+{
+  "name": "Crux Tutor",
+  "description": "Seu professor particular inteligente com IA Gemini para estudar, criar questionários e revisar conteúdos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,1 @@
+sed -i '530,535s/item.grade == -1.0 -> MaterialTheme.colorScheme.onSurfaceVariant/item.grade == -1.0 -> MaterialTheme.colorScheme.onSurfaceVariant/g' app/src/main/java/com/example/ui/profile/ProfileScreen.kt
