@@ -56,3 +56,18 @@ interface ProgressDao {
     @Query("SELECT * FROM topic_progress WHERE totalQuestions > 0 AND (CAST(correctCount AS FLOAT) / totalQuestions) < 0.7 ORDER BY (CAST(correctCount AS FLOAT) / totalQuestions) ASC")
     fun getWeakTopics(): Flow<List<TopicProgressEntity>>
 }
+
+@Dao
+interface NewsDao {
+    @Query("SELECT * FROM educational_news ORDER BY timestamp DESC")
+    fun getAllNews(): Flow<List<NewsEntity>>
+
+    @Query("SELECT * FROM educational_news WHERE id = :id LIMIT 1")
+    suspend fun getNewsById(id: String): NewsEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNews(news: NewsEntity)
+
+    @Query("DELETE FROM educational_news WHERE id = :id")
+    suspend fun deleteNews(id: String)
+}

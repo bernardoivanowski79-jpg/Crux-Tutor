@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.data.repositories.TutorRepository
 import com.example.ui.chat.ChatViewModel
 import com.example.ui.home.HomeViewModel
+import com.example.ui.news.NewsViewModel
 import com.example.ui.profile.ProfileViewModel
 import com.example.ui.quiz.QuizViewModel
 import com.example.ui.revision.RevisionViewModel
@@ -23,6 +24,7 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(StudyViewModel::class.java) -> StudyViewModel(repository) as T
             modelClass.isAssignableFrom(RevisionViewModel::class.java) -> RevisionViewModel(repository) as T
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> ProfileViewModel(repository) as T
+            modelClass.isAssignableFrom(NewsViewModel::class.java) -> NewsViewModel(repository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }

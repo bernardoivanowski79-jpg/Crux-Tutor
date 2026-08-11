@@ -48,6 +48,8 @@ import com.example.ui.chat.ChatScreen
 import com.example.ui.chat.ChatViewModel
 import com.example.ui.home.HomeScreen
 import com.example.ui.home.HomeViewModel
+import com.example.ui.news.NewsScreen
+import com.example.ui.news.NewsViewModel
 import com.example.ui.profile.ProfileScreen
 import com.example.ui.profile.ProfileViewModel
 import com.example.ui.quiz.ActiveQuizScreen
@@ -64,6 +66,7 @@ object Screen {
     const val QUIZ_CONFIG = "quiz_config"
     const val ACTIVE_QUIZ = "active_quiz"
     const val STUDY = "study"
+    const val NEWS = "news"
     const val REVISION = "revision"
     const val PROFILE = "profile"
 }
@@ -95,6 +98,7 @@ fun CruxMainApp(
     studyViewModel: StudyViewModel,
     revisionViewModel: RevisionViewModel,
     profileViewModel: ProfileViewModel,
+    newsViewModel: NewsViewModel,
     modifier: Modifier = Modifier
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -108,6 +112,7 @@ fun CruxMainApp(
         "${Screen.CHAT}?prompt={prompt}",
         Screen.QUIZ_CONFIG,
         Screen.STUDY,
+        Screen.NEWS,
         Screen.REVISION,
         Screen.PROFILE
     )
@@ -186,6 +191,7 @@ fun CruxMainApp(
             studyViewModel = studyViewModel,
             revisionViewModel = revisionViewModel,
             profileViewModel = profileViewModel,
+            newsViewModel = newsViewModel,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -200,6 +206,7 @@ fun CruxTutorNavHost(
     studyViewModel: StudyViewModel,
     revisionViewModel: RevisionViewModel,
     profileViewModel: ProfileViewModel,
+    newsViewModel: NewsViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -221,6 +228,12 @@ fun CruxTutorNavHost(
                 onNavigateToStudy = { navController.navigate(Screen.STUDY) },
                 onNavigateToRevision = { navController.navigate(Screen.REVISION) },
                 onNavigateToProfile = { navController.navigate(Screen.PROFILE) }
+            )
+        }
+
+        composable(Screen.NEWS) {
+            NewsScreen(
+                newsViewModel = newsViewModel
             )
         }
 

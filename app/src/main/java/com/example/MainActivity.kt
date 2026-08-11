@@ -16,6 +16,7 @@ import com.example.ui.AppViewModelFactory
 import com.example.ui.chat.ChatViewModel
 import com.example.ui.home.HomeViewModel
 import com.example.ui.navigation.CruxMainApp
+import com.example.ui.news.NewsViewModel
 import com.example.ui.profile.ProfileViewModel
 import com.example.ui.quiz.QuizViewModel
 import com.example.ui.revision.RevisionViewModel
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
         val studyViewModel: StudyViewModel by viewModels { factory }
         val revisionViewModel: RevisionViewModel by viewModels { factory }
         val profileViewModel: ProfileViewModel by viewModels { factory }
+        val newsViewModel: NewsViewModel by viewModels { factory }
 
         setContent {
             CruxTutorTheme {
@@ -53,7 +55,8 @@ class MainActivity : ComponentActivity() {
                         quizViewModel = quizViewModel,
                         studyViewModel = studyViewModel,
                         revisionViewModel = revisionViewModel,
-                        profileViewModel = profileViewModel
+                        profileViewModel = profileViewModel,
+                        newsViewModel = newsViewModel
                     )
                 }
             }

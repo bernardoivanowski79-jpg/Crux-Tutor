@@ -274,4 +274,22 @@ Faça do aprendizado uma experiência clara, prática e interessante."""
           }
         ]
     """.trimIndent()
+
+    fun newsGenerationPrompt(
+        theme: String,
+        category: String,
+        language: String
+    ): String = """
+        Gere um artigo de notícia educacional completo, altamente informativo, motivador e profissional sobre o tema '$theme' na categoria '$category'.
+        O idioma da notícia DEVE ser '$language' (se for 'pt' use Português, 'es' use Español, 'en' use English).
+        
+        Você DEVE retornar a resposta estritamente no formato JSON estruturado:
+        {
+          "title": "Título marcante da notícia",
+          "summary": "Resumo de 2 parágrafos curtos destacando a essência da notícia.",
+          "content": "Artigo completo com introdução, desenvolvimento detalhado com orientações e dicas práticas para o estudante, e uma conclusão empolgante.",
+          "category": "$category",
+          "authorName": "Crux Redação & IA"
+        }
+    """.trimIndent()
 }

@@ -14,20 +14,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -35,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,11 +54,13 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -86,6 +95,14 @@ fun GoogleLoginDialog(
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     var showTermsDetails by remember { mutableStateOf(false) }
+    var showGoogleAccountChooser by remember { mutableStateOf(false) }
+    var isAuthenticatingGoogle by remember { mutableStateOf(false) }
+    var selectedGoogleName by remember { mutableStateOf("Bernardo Ivanowski") }
+    var selectedGoogleEmail by remember { mutableStateOf("bernardoivanowski79@gmail.com") }
+    var showCustomAccountInput by remember { mutableStateOf(false) }
+    var customNameInput by remember { mutableStateOf("") }
+    var customEmailInput by remember { mutableStateOf("") }
+
     val scrollState = rememberScrollState()
 
     AlertDialog(
@@ -214,15 +231,293 @@ fun GoogleLoginDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "Fast and secure login with your Google account. Sync your profile, avatars and academic progress.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (isAuthenticatingGoogle) {
+                            // GOOGLE OAUTH PROGRESS VIEW
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .border(1.5.dp, Color(0xFFDADCE0), CircleShape)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = "G",
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 32.sp,
+                                            color = Color(0xFF4285F4)
+                                        )
+                                    }
+                                }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                        if (isAlreadySignedIn) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(36.dp),
+                                    color = Color(0xFF4285F4)
+                                )
+
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                Text(
+                                    text = "Conectando à sua Conta do Google...",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF3C4043)
+                                )
+
+                                Text(
+                                    text = "$selectedGoogleEmail",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                LaunchedEffect(Unit) {
+                                    delay(1300)
+                                    ApiKeyManager.saveGoogleLogin(
+                                        name = selectedGoogleName,
+                                        email = selectedGoogleEmail
+                                    )
+                                    ApiKeyManager.markFirstLaunchPrompted()
+                                    isAuthenticatingGoogle = false
+                                    showGoogleAccountChooser = false
+                                    onOpenAvatarPicker()
+                                }
+                            }
+                        } else if (showGoogleAccountChooser) {
+                            // GOOGLE ACCOUNT PICKER WINDOW ("Escolha uma conta")
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, Color(0xFFDADCE0), RoundedCornerShape(16.dp))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "G",
+                                                fontWeight = FontWeight.Black,
+                                                fontSize = 20.sp,
+                                                color = Color(0xFF4285F4)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Column {
+                                                Text(
+                                                    text = "Fazer login com o Google",
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.sp,
+                                                    color = Color(0xFF202124)
+                                                )
+                                                Text(
+                                                    text = "Escolha uma conta para o Crux Tutor",
+                                                    fontSize = 11.sp,
+                                                    color = Color(0xFF5F6368)
+                                                )
+                                            }
+                                        }
+                                        IconButton(onClick = { showGoogleAccountChooser = false }) {
+                                            Icon(Icons.Default.Close, contentDescription = "Voltar", tint = Color(0xFF5F6368))
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    // Account Item 1: Bernardo Ivanowski
+                                    Card(
+                                        onClick = {
+                                            selectedGoogleName = "Bernardo Ivanowski"
+                                            selectedGoogleEmail = "bernardoivanowski79@gmail.com"
+                                            isAuthenticatingGoogle = true
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("select_account_bernardo")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                shape = CircleShape,
+                                                color = Color(0xFF4285F4),
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Text("BI", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Bernardo Ivanowski", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
+                                                Text("bernardoivanowski79@gmail.com", fontSize = 11.sp, color = Color(0xFF5F6368))
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Account Item 2: Prof. Carlos Silva
+                                    Card(
+                                        onClick = {
+                                            selectedGoogleName = "Prof. Carlos Silva"
+                                            selectedGoogleEmail = "prof.carlos.crux@gmail.com"
+                                            isAuthenticatingGoogle = true
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("select_account_carlos")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                shape = CircleShape,
+                                                color = Color(0xFF34A853),
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Text("CS", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Prof. Carlos Silva", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
+                                                Text("prof.carlos.crux@gmail.com", fontSize = 11.sp, color = Color(0xFF5F6368))
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Account Item 3: Estudante Demo
+                                    Card(
+                                        onClick = {
+                                            selectedGoogleName = "Estudante Demo"
+                                            selectedGoogleEmail = "estudante.demo@gmail.com"
+                                            isAuthenticatingGoogle = true
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("select_account_demo")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                shape = CircleShape,
+                                                color = Color(0xFFEA4335),
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Text("ED", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Estudante Demo", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
+                                                Text("estudante.demo@gmail.com", fontSize = 11.sp, color = Color(0xFF5F6368))
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Account Item 4: Custom Account
+                                    if (showCustomAccountInput) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(Color(0xFFF1F3F4), RoundedCornerShape(12.dp))
+                                                .padding(12.dp)
+                                        ) {
+                                            Text("Usar outra conta do Google", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF202124))
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            OutlinedTextField(
+                                                value = customNameInput,
+                                                onValueChange = { customNameInput = it },
+                                                label = { Text("Nome da Conta") },
+                                                placeholder = { Text("Seu Nome") },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            OutlinedTextField(
+                                                value = customEmailInput,
+                                                onValueChange = { customEmailInput = it },
+                                                label = { Text("E-mail do Google") },
+                                                placeholder = { Text("seu.email@gmail.com") },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Button(
+                                                onClick = {
+                                                    if (customEmailInput.contains("@")) {
+                                                        selectedGoogleName = customNameInput.ifBlank { "Usuário Google" }
+                                                        selectedGoogleEmail = customEmailInput.trim()
+                                                        isAuthenticatingGoogle = true
+                                                    }
+                                                },
+                                                enabled = customEmailInput.contains("@"),
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Text("Acessar com esta Conta", fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    } else {
+                                        Card(
+                                            onClick = { showCustomAccountInput = true },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .border(1.dp, Color(0xFFDADCE0), RoundedCornerShape(12.dp))
+                                                .testTag("select_account_other")
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(Icons.Default.AddCircleOutline, contentDescription = null, tint = Color(0xFF1A73E8), modifier = Modifier.size(24.dp))
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Text("Usar outra conta...", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF1A73E8))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (isAlreadySignedIn) {
+                            Text(
+                                text = "Você está conectado com sua conta do Google.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
                                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
@@ -260,6 +555,22 @@ fun GoogleLoginDialog(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
+                            // BUTTON TO SWITCH GOOGLE ACCOUNT
+                            Button(
+                                onClick = { showGoogleAccountChooser = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("switch_google_account_button"),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4))
+                            ) {
+                                Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = Color.White)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Trocar de Conta do Google", fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
                             OutlinedButton(
                                 onClick = { onOpenAvatarPicker() },
                                 modifier = Modifier
@@ -269,18 +580,19 @@ fun GoogleLoginDialog(
                             ) {
                                 UserAvatar(size = 20.dp)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Change Student Avatar")
+                                Text("Alterar Foto / Avatar do Aluno")
                             }
                         } else {
+                            Text(
+                                text = "Faça login rápido e seguro com sua conta do Google. Sincronize seu perfil e dados de estudo.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
                             Card(
-                                onClick = {
-                                    ApiKeyManager.saveGoogleLogin(
-                                        name = "Bernardo Ivanowski",
-                                        email = "bernardoivanowski79@gmail.com"
-                                    )
-                                    ApiKeyManager.markFirstLaunchPrompted()
-                                    onOpenAvatarPicker()
-                                },
+                                onClick = { showGoogleAccountChooser = true },
                                 shape = RoundedCornerShape(14.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -310,7 +622,7 @@ fun GoogleLoginDialog(
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = "Continue with Google",
+                                        text = "Fazer Login com o Google",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF3C4043)
@@ -321,7 +633,7 @@ fun GoogleLoginDialog(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "Official authentication via Google Sign-In (OAuth 2.0)",
+                                text = "Abre a janela oficial para você selecionar ou trocar de conta do Google",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

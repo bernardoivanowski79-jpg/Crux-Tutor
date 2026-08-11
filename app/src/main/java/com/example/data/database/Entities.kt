@@ -46,3 +46,16 @@ data class TopicProgressEntity(
     val totalQuestions: Int = 0,
     val lastStudiedAt: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "educational_news")
+data class NewsEntity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val summary: String,
+    val content: String,
+    val category: String,
+    val authorName: String,
+    val dateFormatted: String,
+    val isAiGenerated: Boolean = false,
+    val timestamp: Long = System.currentTimeMillis()
+)

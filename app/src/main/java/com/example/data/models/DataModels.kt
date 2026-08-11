@@ -49,3 +49,12 @@ data class RevisionRecommendation(
     val reason: String,
     val keyPointsToReview: List<String>
 )
+
+@JsonClass(generateAdapter = true)
+data class GeneratedNews(
+    val title: String,
+    val summary: String,
+    val content: String,
+    val category: String,
+    val authorName: String = "Crux Newsroom & IA"
+)

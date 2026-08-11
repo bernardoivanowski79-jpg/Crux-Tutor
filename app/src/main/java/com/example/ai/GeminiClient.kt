@@ -2,6 +2,7 @@ package com.example.ai
 
 import com.example.BuildConfig
 import com.example.data.models.AnswerEvaluation
+import com.example.data.models.GeneratedNews
 import com.example.data.models.GeneratedQuiz
 import com.example.data.models.RevisionRecommendation
 import com.example.data.models.StudyLesson
@@ -259,6 +260,45 @@ object GeminiClient {
                 Result.success(recommendations)
             } else {
                 Result.failure(Exception("Não foi possível gerar as sugestões de revisão."))
+            }
+        } catch (e: Exception) {
+            Result.failure(mapApiError(e))
+        }
+    }
+
+    /**
+     * Generate an educational news article using AI.
+     */
+    suspend fun generateNewsArticle(
+        theme: String,
+        category: String,
+        language: String
+    ): Result<GeneratedNews> {
+        val apiKey = getApiKey()
+        if (apiKey.isEmpty()) {
+            return Result.failure(IllegalStateException("Chave da API do Gemini não configurada."))
+        }
+        val model = getSelectedModel()
+
+        val prompt = Prompts.newsGenerationPrompt(theme, category, language)
+        val request = GenerateContentRequest(
+            contents = listOf(Content(role = "user", parts = listOf(Part(text = prompt)))),
+            systemInstruction = Content(parts = listOf(Part(text = Prompts.SYSTEM_PROMPT))),
+            generationConfig = GenerationConfig(
+                temperature = 0.6f,
+                responseMimeType = "application/json"
+            )
+        )
+
+        return try {
+            val response = service.generateContent(model, apiKey, request)
+            val jsonText = cleanJsonResponse(response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: "")
+            val adapter = moshi.adapter(GeneratedNews::class.java)
+            val news = adapter.fromJson(jsonText)
+            if (news != null) {
+                Result.success(news)
+            } else {
+                Result.failure(Exception("Não foi possível gerar o artigo de notícia com IA."))
             }
         } catch (e: Exception) {
             Result.failure(mapApiError(e))

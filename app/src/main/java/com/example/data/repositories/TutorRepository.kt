@@ -3,10 +3,12 @@ package com.example.data.repositories
 import com.example.ai.GeminiClient
 import com.example.data.database.AppDatabase
 import com.example.data.database.ChatMessageEntity
+import com.example.data.database.NewsEntity
 import com.example.data.database.QuizResultEntity
 import com.example.data.database.StudyLessonEntity
 import com.example.data.database.TopicProgressEntity
 import com.example.data.models.AnswerEvaluation
+import com.example.data.models.GeneratedNews
 import com.example.data.models.GeneratedQuiz
 import com.example.data.models.RevisionRecommendation
 import com.example.data.models.StudyLesson
@@ -15,6 +17,7 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
@@ -24,6 +27,7 @@ class TutorRepository(private val db: AppDatabase) {
     private val quizDao = db.quizDao()
     private val studyDao = db.studyDao()
     private val progressDao = db.progressDao()
+    private val newsDao = db.newsDao()
 
     private val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
 
@@ -176,5 +180,101 @@ class TutorRepository(private val db: AppDatabase) {
             lastStudiedAt = System.currentTimeMillis()
         )
         progressDao.insertOrUpdateProgress(updated)
+    }
+
+    // News Operations
+    val allNews: Flow<List<NewsEntity>> = newsDao.getAllNews().onStart {
+        preloadInitialNewsIfEmpty()
+    }
+
+    private suspend fun preloadInitialNewsIfEmpty() = withContext(Dispatchers.IO) {
+        val existing = newsDao.getAllNews().firstOrNull() ?: emptyList()
+        if (existing.isEmpty()) {
+            val initialList = listOf(
+                NewsEntity(
+                    id = UUID.randomUUID().toString(),
+                    title = "ENEM 2026 & Vestibulares: Cronograma e Novas Competências",
+                    summary = "Confira as datas do calendário nacional de exames, mudanças nos critérios de redação e estratégias para a nota máxima.",
+                    content = "O Instituto Nacional de Estudos e Pesquisas Educacionais reforçou as diretrizes para os exames deste ano. O foco principal das bancas examinadoras nesta edição será a capacidade de articulação crítica, raciocínio em ciências humanas e resolução interdisciplinar.\n\nEspecialistas recomendam criar um cronograma semanal dividindo revisões teóricas de manhã e simulados práticos à tarde. O Crux Tutor oferece simulados com feedback de IA para ajudar você a conquistar a vaga dos seus sonhos.",
+                    category = "ENEM",
+                    authorName = "Crux Newsroom",
+                    dateFormatted = "Hoje",
+                    isAiGenerated = false,
+                    timestamp = System.currentTimeMillis()
+                ),
+                NewsEntity(
+                    id = UUID.randomUUID().toString(),
+                    title = "Inteligência Artificial no Aprendizado: Como Usar o Gemini para Estudar",
+                    summary = "Descubra como tutores interativos com IA revolucionam a retenção de conceitos complexos em exames e exatas.",
+                    content = "Estudos de psicologia cognitiva comprovam que a prática de recuperação ativa (active recall) combinada com explicação socrática aumenta a retenção em até 70%.\n\nFerramentas como o Crux Tutor utilizam a API do Gemini para atuar como um professor particular 24h. Em vez de simplesmente dar respostas diretas, a IA faz perguntas guiadas para ajudar o estudante a desenvolver raciocínio autônomo.",
+                    category = "IA & Tecnologia",
+                    authorName = "Prof. Bernardo & Crux Tech",
+                    dateFormatted = "Ontem",
+                    isAiGenerated = true,
+                    timestamp = System.currentTimeMillis() - 86400000L
+                ),
+                NewsEntity(
+                    id = UUID.randomUUID().toString(),
+                    title = "Técnica Pomodoro 2.0 e Ciclos Rítmicos de Alta Performance",
+                    summary = "Aprenda a otimizar seus blocos de foco reduzindo a fadiga mental e aumentando a absorção em Matemática e Física.",
+                    content = "Manter o foco em matérias de exatas exige pausas estratégicas. A técnica adaptada sugere 40 minutos de estudo imersivo sem distrações seguidos de 10 minutos de descanso ativo.\n\nDurante o descanso, evite redes sociais e opte por beber água ou caminhar. Essa simples mudança previne a fadiga e garante excelente retenção na memória de longo prazo.",
+                    category = "Dicas de Estudo",
+                    authorName = "Equipe Pedagógica Crux",
+                    dateFormatted = "Há 2 dias",
+                    isAiGenerated = false,
+                    timestamp = System.currentTimeMillis() - 172800000L
+                )
+            )
+            initialList.forEach { newsDao.insertNews(it) }
+        }
+    }
+
+    suspend fun publishNews(
+        title: String,
+        summary: String,
+        content: String,
+        category: String,
+        authorName: String,
+        isAiGenerated: Boolean = false
+    ): NewsEntity = withContext(Dispatchers.IO) {
+        val entity = NewsEntity(
+            id = UUID.randomUUID().toString(),
+            title = title,
+            summary = summary,
+            content = content,
+            category = category,
+            authorName = authorName.ifBlank { "Crux Publisher" },
+            dateFormatted = "Hoje",
+            isAiGenerated = isAiGenerated,
+            timestamp = System.currentTimeMillis()
+        )
+        newsDao.insertNews(entity)
+        entity
+    }
+
+    suspend fun generateAndSaveNews(
+        theme: String,
+        category: String,
+        language: String = "pt"
+    ): Result<NewsEntity> = withContext(Dispatchers.IO) {
+        val result = GeminiClient.generateNewsArticle(theme, category, language)
+        if (result.isSuccess) {
+            val generated = result.getOrNull()!!
+            val entity = publishNews(
+                title = generated.title,
+                summary = generated.summary,
+                content = generated.content,
+                category = generated.category.ifBlank { category },
+                authorName = generated.authorName.ifBlank { "Crux Redação IA" },
+                isAiGenerated = true
+            )
+            Result.success(entity)
+        } else {
+            Result.failure(result.exceptionOrNull() ?: Exception("Erro ao gerar notícia com IA."))
+        }
+    }
+
+    suspend fun deleteNews(id: String) = withContext(Dispatchers.IO) {
+        newsDao.deleteNews(id)
     }
 }
