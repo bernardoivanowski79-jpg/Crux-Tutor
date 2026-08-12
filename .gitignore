@@ -16,3 +16,10 @@
 local.properties
 .env
 debug.keystore
+
+# Sensitive files & Credentials
+app/google-services.json
+*.keystore
+*.jks
+secrets.properties
+*.env
